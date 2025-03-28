@@ -1,0 +1,151 @@
+@model CVOnline.Web.Models.ViewModels.CreateCVViewModel
+@{
+    ViewData["Title"] = "Tạo CV mới";
+}
+
+<div class="container">
+    <h1 class="mb-4">Tạo CV mới với mẫu @Model.TemplateName</h1>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <img src="@Model.PreviewImageUrl" class="card-img-top" alt="@Model.TemplateName">
+                <div class="card-body">
+                    <h5 class="card-title">@Model.TemplateName</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Nhập thông tin CV của bạn</h5>
+                </div>
+                <div class="card-body">
+                    <form id="createCVForm">
+                        <input type="hidden" name="TemplateId" value="@Model.TemplateId" />
+                        <input type="hidden" name="TemplateName" value="@Model.TemplateName" />
+                        <input type="hidden" name="PreviewImageUrl" value="@Model.PreviewImageUrl" />
+                        <!-- Thêm các input ẩn để gửi thông tin từ Model -->
+                        <input type="hidden" name="FullName" value="@Model.FullName" />
+                        <input type="hidden" name="Email" value="@Model.Email" />
+                        <input type="hidden" name="PhoneNumber" value="@Model.PhoneNumber" />
+                        <input type="hidden" name="Address" value="@Model.Address" />
+
+                        <div class="form-group mb-3">
+                            <label for="Title" class="control-label">Tiêu đề CV</label>
+                            <input type="text" name="Title" class="form-control"
+                                placeholder="Ví dụ: CV Xin việc IT - Nguyễn Văn A" />
+                            <span class="text-danger" id="TitleError"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="Content" class="control-label">Nội dung CV</label>
+                            <textarea id="cv-content" class="form-control" rows="15"></textarea>
+                            <span class="text-danger" id="ContentError"></span>
+                        </div>
+
+                        <div class="form-group d-flex justify-content-between">
+                            <a asp-action="Templates" class="btn btn-secondary">Quay lại</a>
+                            <button type="submit" class="btn btn-success">Lưu CV</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.ckeditor.com/ckeditor5/36.0.1/classic/ckeditor.js"></script>
+    <script>
+        let editor;
+        ClassicEditor
+            .create(document.querySelector('#cv-content'))
+            .then(newEditor => {
+                editor = newEditor;
+            })
+            .catch(error => {
+                console.error(error);
+            });
+
+        $(document).ready(function () {
+            var templateContent = `
+    <h2>THÔNG TIN CÁ NHÂN</h2>
+    <p><strong>Họ và tên:</strong> @Model.FullName</p>
+    <p><strong>Email:</strong> @Model.Email</p>
+    <p><strong>Số điện thoại:</strong> @Model.PhoneNumber</p>
+    <p><strong>Địa chỉ:</strong> @Model.Address</p>
+
+    <h2>HỌC VẤN</h2>
+    <p><strong>20XX - 20XX:</strong> Tên trường đại học/cao đẳng</p>
+    <p><strong>Chuyên ngành:</strong> Ngành học của bạn</p>
+    <p><strong>GPA:</strong> X.X/4.0</p>
+
+    <h2>KINH NGHIỆM LÀM VIỆC</h2>
+    <p><strong>MM/YYYY - MM/YYYY:</strong> Vị trí - Tên công ty</p>
+    <ul>
+        <li>Mô tả công việc và thành tựu 1</li>
+        <li>Mô tả công việc và thành tựu 2</li>
+        <li>Mô tả công việc và thành tựu 3</li>
+    </ul>
+
+    <h2>KỸ NĂNG</h2>
+    <p><strong>Kỹ năng chuyên môn:</strong> Liệt kê các kỹ năng chuyên môn</p>
+    <p><strong>Kỹ năng mềm:</strong> Liệt kê các kỹ năng mềm</p>
+    <p><strong>Ngoại ngữ:</strong> Tiếng Anh (Trình độ)</p>
+
+    <h2>CHỨNG CHỈ</h2>
+    <p><strong>MM/YYYY:</strong> Tên chứng chỉ - Nơi cấp</p>
+
+    <h2>SỞ THÍCH</h2>
+    <p>Liệt kê các sở thích của bạn</p>
+                `;
+            setTimeout(function () {
+                if (editor) {
+                    editor.setData(templateContent);
+                }
+            }, 1000);
+        });
+
+        $('#createCVForm').on('submit', function (e) {
+            e.preventDefault();
+
+            const formData = {
+                Title: $('input[name="Title"]').val(),
+                Content: editor.getData(),
+                TemplateId: $('input[name="TemplateId"]').val(),
+                // Lấy giá trị từ các input ẩn
+                FullName: $('input[name="FullName"]').val(),
+                Email: $('input[name="Email"]').val(),
+                PhoneNumber: $('input[name="PhoneNumber"]').val(),
+                Address: $('input[name="Address"]').val(),
+                TemplateName: $('input[name="TemplateName"]').val(),
+                PreviewImageUrl: $('input[name="PreviewImageUrl"]').val()
+            };
+
+            console.log("Dữ liệu gửi đi:", formData); // Debug
+
+            $.ajax({
+                url: '@Url.Action("Create", "CV")',
+                type: 'POST',
+                contentType: "application/json",
+                data: JSON.stringify(formData),
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        @* window.location.href = '@Url.Action("Index", "CV")'; *@
+                         window.location.href = '/CV/Index';
+                    } else {
+                        console.error("Lỗi Server:", response.message);
+                        alert("Lỗi: " + response.message);
+                    }
+                },
+                error: function (xhr) {
+                    console.error("Lỗi AJAX:", xhr.responseText);
+                    alert("Đã có lỗi xảy ra khi lưu CV: " + xhr.responseText);
+                }
+            });
+        });
+    </script>
+}

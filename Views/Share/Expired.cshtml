@@ -1,0 +1,13 @@
+@{
+    ViewData["Title"] = "Liên kết hết hạn";
+}
+
+<div class="container text-center mt-5">
+    <div class="alert alert-warning">
+        <h3>Liên kết đã hết hạn</h3>
+        <p>Liên kết chia sẻ CV này đã hết hạn hoặc không còn hiệu lực.</p>
+        <p>Vui lòng liên hệ với người chia sẻ để được cấp liên kết mới.</p>
+    </div>
+    
+    <a href="@Url.Action("Index", "Home")" class="btn btn-primary">Về trang chủ</a>
+</div>

@@ -1,0 +1,50 @@
+@model List<CVOnline.Web.Models.Domain.CV>
+
+@{
+    ViewData["Title"] = "Danh sách CV";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-3">Danh sách CV</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            Bạn chưa có CV nào. <a asp-controller="CV" asp-action="Create" class="alert-link">Tạo CV ngay</a>.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var cv in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">@cv.Title</h5>
+                            <p class="card-text">@cv.Content</p>
+                            <a asp-action="Index" asp-route-id="@cv.Id" class="btn btn-primary">Chia sẻ CV</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <a asp-controller="CV" asp-action="Index" class="btn btn-secondary">Quay lại</a>
+</div>

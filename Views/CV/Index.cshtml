@@ -1,0 +1,119 @@
+@model IEnumerable<CVOnline.Web.Models.Domain.CV>
+@{
+    ViewData["Title"] = "Danh sách CV của tôi";
+}
+
+<div class="container">
+    <h1 class="mb-4">Danh sách CV của tôi</h1>
+
+    <p>@ViewBag.sl CV đã được tạo</p>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div id="cvList">
+        <!-- Danh sách CV sẽ được render bằng JavaScript -->
+        @foreach(CVOnline.Web.Models.Domain.CV i  in Model)
+        {
+            <p>minh @i.Id</p>
+        }
+        
+    </div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Tiêu đề</th>
+            <th>Mẫu</th>
+            <th>Ngày tạo</th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach(CVOnline.Web.Models.Domain.CV i  in ViewBag.ds)
+        {
+            <tr>
+                <td class="col">@i.Id</td>
+                <td>@i.Title</td>
+                <td>@i.UpdatedDate</td>
+                <td>
+                    <a href="/CV/Edit/@i.Id" class="btn btn-primary btn-sm">Sửa</a>
+                    <a href="/CV/Delete/@i.Id" class="btn btn-danger btn-sm">Xóa</a>
+                    <a href="/CV/Preview/@i.Id" class="btn btn-info btn-sm">Xem trước</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+    <a asp-action="Templates" class="btn btn-primary mt-3">Tạo CV mới</a>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Gọi API để lấy danh sách CV
+            $.ajax({
+                url: '/api/CVApi/user-cvs',
+                type: 'GET',
+                xhrFields: {
+                    withCredentials: true // Gửi cookie xác thực
+                },
+                success: function(response) {
+                    console.log('Dữ liệu trả về từ API:', response);
+
+                    // Đảm bảo response là một mảng
+                    let cvs = Array.isArray(response) ? response : (response.data || []);
+
+                    let html = '';
+                    if (cvs.length > 0) {
+                        html += '<table class="table">';
+                        html += '<thead><tr><th>Tiêu đề</th><th>Mẫu</th><th>Ngày tạo</th><th>Hành động</th></tr></thead>';
+                        html += '<tbody>';
+                        cvs.forEach(cv => {
+                            // Kiểm tra các trường trước khi sử dụng
+                            const title = cv.title || 'Không có tiêu đề';
+                            const templateName = cv.template && cv.template.name ? cv.template.name : 'Không có mẫu';
+                            const createdDate = cv.createdDate ? new Date(cv.createdDate).toLocaleDateString('vi-VN') : 'Không có ngày';
+                            const id = cv.id || 0;
+
+                            html += `<tr>
+                                <td>${title}</td>
+                                <td>${templateName}</td>
+                                <td>${createdDate}</td>
+                                <td>
+                                    <a href="/CV/Edit/${id}" class="btn btn-primary btn-sm">Sửa</a>
+                                    <a href="/CV/Delete/${id}" class="btn btn-danger btn-sm">Xóa</a>
+                                    <a href="/CV/Preview/${id}" class="btn btn-info btn-sm">Xem trước</a>
+                                </td>
+                            </tr>`;
+                        });
+                        html += '</tbody></table>';
+                    } else {
+                        html = '<p>Bạn chưa có CV nào. <a href="/CV/Templates">Tạo CV mới</a></p>';
+                    }
+                    $('#cvList').html(html);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Lỗi khi lấy danh sách CV:', xhr.status, xhr.responseText);
+                    let errorMessage = 'Đã có lỗi xảy ra khi tải danh sách CV.';
+                    if (xhr.status === 401) {
+                        errorMessage = 'Bạn cần đăng nhập để xem danh sách CV. <a href="/Identity/Account/Login">Đăng nhập</a>';
+                    } else if (xhr.responseText) {
+                        try {
+                            const errorResponse = JSON.parse(xhr.responseText);
+                            errorMessage = errorResponse.message || errorMessage;
+                        } catch (e) {
+                            errorMessage = xhr.responseText;
+                        }
+                    }
+                    $('#cvList').html(`<p>${errorMessage}</p>`);
+                }
+            });
+        });
+    </script>
+}

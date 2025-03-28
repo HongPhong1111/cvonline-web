@@ -1,0 +1,33 @@
+﻿@model List<CVOnline.Web.Models.Domain.CVTemplate>
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="hero-section text-center py-5 bg-primary text-white">
+    <h1 class="display-4">Tạo CV nhanh chóng và chuyên nghiệp</h1>
+    <p class="lead">Chọn ngay mẫu CV tuyệt đẹp và ấn tượng bên dưới để dễ dàng thu hút nhà tuyển dụng!</p>
+</div>
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Các mẫu CV nổi bật</h2>
+
+    <div class="row">
+        @foreach (var template in Model.Take(6))
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <img src="@template.PreviewImageUrl" class="card-img-top" alt="@template.Name">
+                    <div class="card-body">
+                        <h5 class="card-title">@template.Name</h5>
+                        <p class="card-text">Loại: @template.Category</p>
+                        <a asp-controller="CV" asp-action="Create" asp-route-templateId="@template.Id" class="btn btn-primary">Sử dụng mẫu này</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="text-center mt-4">
+        <a asp-controller="CV" asp-action="Templates" class="btn btn-outline-primary">Xem tất cả mẫu CV</a>
+    </div>
+</div>

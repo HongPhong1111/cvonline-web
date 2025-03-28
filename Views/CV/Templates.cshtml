@@ -1,0 +1,63 @@
+@model List<CVOnline.Web.Models.Domain.CVTemplate>
+@{
+    ViewData["Title"] = "Danh sách mẫu CV";
+}
+
+<div class="container">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
+    
+    <div class="row mb-4">
+        <div class="col">
+            <div class="btn-group">
+                <button type="button" class="btn btn-outline-primary active" data-filter="all">Tất cả</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="Simple">Simple</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="Colorful">Colorful</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="Office Worker">Office Worker</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="Timeline">Timeline</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="Experiencer">Experiencer</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="No Photo">No Photo</button>
+                <button type="button" class="btn btn-outline-primary" data-filter="Fresher">Fresher</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row template-container">
+        @foreach (var template in Model)
+        {
+            <div class="col-md-4 mb-4 template-item" data-category="@template.Category">
+                <div class="card">
+                    <img src="@template.PreviewImageUrl" class="card-img-top" alt="@template.Name">
+                    <div class="card-body">
+                        <h5 class="card-title">@template.Name</h5>
+                        <p class="card-text">
+                            <span class="badge bg-secondary">@template.Category</span>
+                            <span class="badge bg-info">@template.UsageCount lượt sử dụng</span>
+                        </p>
+                        <a asp-action="Create" asp-route-templateId="@template.Id" class="btn btn-primary w-100">Sử dụng mẫu này</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Lọc mẫu CV theo danh mục
+            $('[data-filter]').click(function() {
+                $('[data-filter]').removeClass('active');
+                $(this).addClass('active');
+                
+                var filterValue = $(this).attr('data-filter');
+                
+                if (filterValue === 'all') {
+                    $('.template-item').show();
+                } else {
+                    $('.template-item').hide();
+                    $('.template-item[data-category="' + filterValue + '"]').show();
+                }
+            });
+        });
+    </script>
+}

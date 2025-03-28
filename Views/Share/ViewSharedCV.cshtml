@@ -1,0 +1,31 @@
+@model CVOnline.Web.Models.Domain.CV
+
+@{
+    ViewData["Title"] = "Xem CV được chia sẻ";
+}
+
+<div class="container mt-4">
+    <h2>Xem CV: @Model.Title</h2>
+
+    @if (!string.IsNullOrEmpty(Model.Content))
+    {
+        <div>
+            @Html.Raw(Model.Content)
+        </div>
+    }
+    else if (Model.Template != null)
+    {
+        <style>
+            @Html.Raw(Model.Template.CssTemplate)
+        </style>
+        <div>
+            @Html.Raw(Model.Template.HtmlTemplate)
+        </div>
+    }
+    else
+    {
+        <p>Không tìm thấy nội dung hoặc template cho CV này.</p>
+    }
+
+    <a href="javascript:history.back()" class="btn btn-secondary mt-3">Quay lại</a>
+</div>

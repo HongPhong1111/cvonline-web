@@ -1,0 +1,35 @@
+@model CVOnline.Web.Models.Domain.CV
+
+@{
+    ViewData["Title"] = "Xóa CV";
+}
+
+<div class="container">
+    <h1 class="mb-4">Xác nhận xóa CV</h1>
+
+    @if (Model == null)
+    {
+        <div class="alert alert-danger" role="alert">
+            Không tìm thấy CV để xóa.
+        </div>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            <h3>Bạn có chắc chắn muốn xóa CV này?</h3>
+            <p><strong>Tiêu đề:</strong> @Model.Title</p>
+            <p><strong>Mẫu:</strong> @(Model.Template?.Name ?? "Không có mẫu")</p>
+            <p><strong>Ngày tạo:</strong> @Model.CreatedDate.ToString("dd/MM/yyyy")</p>
+            <p><strong>Dữ liệu sẽ bị xóa vĩnh viễn và không thể khôi phục!</strong></p>
+
+            <form asp-action="Delete" method="post">
+                <input type="hidden" asp-for="Id" />
+                <div class="form-group">
+                    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </div>
+            </form>
+        </div>
+    }
+</div>

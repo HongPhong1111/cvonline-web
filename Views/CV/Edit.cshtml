@@ -1,0 +1,50 @@
+@model CVOnline.Web.Models.ViewModels.EditCVViewModel
+@{
+    ViewData["Title"] = "Chỉnh sửa CV";
+}
+
+<div class="container">
+    <h1 class="mb-4">Chỉnh sửa CV: @Model.Title</h1>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5>Mẫu: @Model.TemplateName</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="TemplateId" />
+                <input type="hidden" asp-for="TemplateName" />
+                
+                <div class="form-group mb-3">
+                    <label asp-for="Title" class="control-label">Tiêu đề CV</label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label asp-for="Content" class="control-label">Nội dung CV</label>
+                    <textarea asp-for="Content" class="form-control" rows="15" id="cv-content"></textarea>
+                    <span asp-validation-for="Content" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+                    <button type="submit" class="btn btn-success">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.ckeditor.com/ckeditor5/36.0.1/classic/ckeditor.js"></script>
+    <script>
+        // Thêm trình soạn thảo văn bản phong phú
+        ClassicEditor
+            .create(document.querySelector('#cv-content'))
+            .catch(error => {
+                console.error(error);
+            });
+    </script>
+}

@@ -1,0 +1,107 @@
+@model CVOnline.Web.Models.ViewModels.ShareCVViewModel
+
+@{
+    ViewData["Title"] = "Chia sẻ CV";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-3">Chia sẻ CV</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Chia sẻ qua Email</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="ShareByEmail" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn gửi email chia sẻ CV này không?');">
+                        <input type="hidden" asp-for="CVId" />
+
+                        <div class="form-group mb-3">
+                            <label asp-for="RecipientEmail" class="form-label"></label>
+                            <input asp-for="RecipientEmail" class="form-control" />
+                            <span asp-validation-for="RecipientEmail" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Subject" class="form-label"></label>
+                            <input asp-for="Subject" class="form-control" />
+                            <span asp-validation-for="Subject" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Message" class="form-label"></label>
+                            <textarea asp-for="Message" class="form-control" rows="5"></textarea>
+                            <span asp-validation-for="Message" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Gửi qua Email</button>
+                        <a asp-action="Index" class="btn btn-secondary ms-2">Quay lại</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Chia sẻ qua Link</h5>
+                </div>
+                <div class="card-body">
+                    <p>Tạo một liên kết để chia sẻ CV của bạn:</p>
+
+                    <div class="input-group mb-3">
+                        <input type="text" id="shareLink" class="form-control" readonly placeholder="Nhấn nút để tạo link chia sẻ">
+                        <button class="btn btn-outline-secondary" type="button" id="copyBtn">Sao chép</button>
+                    </div>
+
+                    <button id="generateLink" class="btn btn-success">Tạo Link Chia Sẻ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#generateLink').click(function() {
+                $.ajax({
+                    url: '@Url.Action("GetShareLink", "Share", new { id = Model.CVId })',
+                    type: 'GET',
+                    success: function(response) {
+                        $('#shareLink').val(response.shareUrl);
+                    },
+                    error: function() {
+                        alert('Có lỗi xảy ra khi tạo liên kết chia sẻ. Vui lòng thử lại.');
+                    }
+                });
+            });
+
+            $('#copyBtn').click(function() {
+                var copyText = document.getElementById("shareLink");
+                copyText.select();
+                copyText.setSelectionRange(0, 99999); // Cho mobile
+                document.execCommand("copy");
+                alert("Đã sao chép liên kết: " + copyText.value);
+            });
+        });
+    </script>
+}

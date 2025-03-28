@@ -1,0 +1,51 @@
+@model CVOnline.Web.Models.Domain.CV
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container">
+    <div class="mb-4">
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Sửa CV</a>
+        <button onclick="window.print()" class="btn btn-success">In CV</button>
+    </div>
+    
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>@Model.Title</h2>
+            <span class="badge bg-secondary">Mẫu: @Model.Template.Name</span>
+        </div>
+        <div class="card-body p-4" id="cv-preview">
+            @Html.Raw(Model.Content)
+        </div>
+    </div>
+</div>
+
+<style>
+    @Html.Raw(Model.Template.CssTemplate)
+    
+    @@media print {
+        header, footer, .mb-4 {
+            display: none;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: none;
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: none;
+        }
+        
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        
+        #cv-preview {
+            padding: 0;
+        }
+    }
+</style>

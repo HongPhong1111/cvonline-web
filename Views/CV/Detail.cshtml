@@ -1,0 +1,21 @@
+@model CVOnline.Web.Models.Domain.CV
+
+@{
+    ViewData["Title"] = "Chi tiết CV";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Chi tiết CV</h2>
+        <div>
+            <a asp-controller="Share" asp-action="Index" asp-route-id="@Model.Id" class="btn btn-primary">
+                <i class="bi bi-share"></i> Chia sẻ CV
+            </a>
+            <a asp-controller="CV" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-secondary">
+                <i class="bi bi-pencil"></i> Chỉnh sửa
+            </a>
+        </div>
+    </div>
+    
+    <!-- Nội dung chi tiết CV hiện tại -->
+</div>
