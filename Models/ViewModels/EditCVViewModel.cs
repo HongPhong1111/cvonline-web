@@ -16,5 +16,8 @@ namespace CVOnline.Web.Models.ViewModels
 
         public int TemplateId { get; set; }
         public string TemplateName { get; set; }
+        public string PhotoUrl { get; set; }
+        public IFormFile Photo { get; set; }
+
     }
 }

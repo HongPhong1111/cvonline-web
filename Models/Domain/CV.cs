@@ -13,5 +13,6 @@ namespace CVOnline.Web.Models.Domain
         public ApplicationUser User { get; set; }
         public int TemplateId { get; set; }
         public CVTemplate Template { get; set; }
+        public string PhotoUrl { get; set; } // Không bắt buộc
     }
 }

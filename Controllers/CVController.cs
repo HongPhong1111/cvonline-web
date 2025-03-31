@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CVOnline.Web.Data;
 using CVOnline.Web.Models.Domain;
 using CVOnline.Web.Models.ViewModels;
@@ -45,6 +46,7 @@ namespace CVOnline.Web.Controllers
             return View(templates);
         }
 
+        [HttpGet]
         public async Task<IActionResult> Create(int templateId)
         {
             var template = await _context.CVTemplates.FindAsync(templateId);
@@ -60,114 +62,174 @@ namespace CVOnline.Web.Controllers
                 TemplateId = templateId,
                 TemplateName = template.Name,
                 PreviewImageUrl = template.PreviewImageUrl,
-                FullName = user.FullName,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                Address = user.Address
+                HtmlTemplate = template.HtmlTemplate ?? "", // Đảm bảo không null
+                CssTemplate = template.CssTemplate ?? "",   // Đảm bảo không null
+                FullName = user.FullName ?? "Nguyễn Văn A",
+                JobTitle = "Nhân viên tư vấn",
+                BirthDate = "15/05/1990",
+                Gender = "Nam",
+                PhoneNumber = user.PhoneNumber ?? "0123-456-789",
+                Email = user.Email ?? "tencuaban@example.com",
+                Address = user.Address ?? "Quận X, Thành phố Y",
+                Website = "be.net/tencuaban"
             };
 
             return View(viewModel);
         }
-
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateCVViewModel model)
+        public async Task<IActionResult> Create(CreateCVViewModel model)
         {
-            Console.WriteLine("Create CV action called");
-
-            if (model == null)
-            {
-                Console.WriteLine("Model is null.");
-                return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ!" });
-            }
+            // Bỏ qua validation cho các trường không bắt buộc
+            ModelState.Remove("Photo");
+            ModelState.Remove("PhotoUrl");
+            ModelState.Remove("HtmlTemplate");
+            ModelState.Remove("CssTemplate");
+            ModelState.Remove("JobTitle");
+            ModelState.Remove("BirthDate");
+            ModelState.Remove("Gender");
+            ModelState.Remove("TemplateName");
+            ModelState.Remove("PreviewImageUrl");
+            ModelState.Remove("FullName");
+            ModelState.Remove("Email");
+            ModelState.Remove("PhoneNumber");
+            ModelState.Remove("Address");
+            ModelState.Remove("Website");
 
             if (!ModelState.IsValid)
             {
-                var errors = ModelState.ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
-                );
-
-                Console.WriteLine("ModelState is not valid.");
-                return BadRequest(new { success = false, message = "Dữ liệu không hợp lệ!", errors });
+                var errors = ModelState.Values.SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ: " + string.Join(", ", errors) });
             }
 
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
+            string photoUrl = null;
+            if (model.Photo != null && model.Photo.Length > 0)
             {
-                Console.WriteLine("User not found.");
-                return BadRequest(new { success = false, message = "Bạn cần đăng nhập để lưu CV!" });
+                var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
+                try
+                {
+                    if (!Directory.Exists(imagesFolder))
+                    {
+                        Directory.CreateDirectory(imagesFolder);
+                    }
+
+                    var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(model.Photo.FileName);
+                    var filePath = Path.Combine(imagesFolder, uniqueFileName);
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await model.Photo.CopyToAsync(fileStream);
+                    }
+                    photoUrl = "/images/" + uniqueFileName;
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = "Lỗi khi lưu ảnh: " + ex.Message });
+                }
             }
 
             var cv = new CV
             {
                 Title = model.Title,
                 Content = model.Content,
+                UserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
                 TemplateId = model.TemplateId,
-                UserId = user.Id,
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = DateTime.Now,
+                UpdatedDate = DateTime.Now,
+                PhotoUrl = photoUrl
             };
 
-            try
+            _context.CVs.Add(cv);
+            await _context.SaveChangesAsync();
+
+            var template = await _context.CVTemplates.FindAsync(model.TemplateId);
+            if (template != null)
             {
-                _context.CVs.Add(cv);
+                template.UsageCount++;
                 await _context.SaveChangesAsync();
-                Console.WriteLine("CV saved successfully.");
-                return Ok(new { success = true, message = "CV đã được lưu thành công!" });
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error saving CV: {ex.Message}");
-                return StatusCode(500, new { success = false, message = "Lỗi khi lưu CV! Hãy thử lại." });
-            }
+
+            return Json(new { success = true, message = "CV đã được lưu thành công!" });
         }
 
+        [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            var user = await _userManager.GetUserAsync(User);
-            var cv = await _context.CVs
-                .Include(c => c.Template)
-                .FirstOrDefaultAsync(c => c.Id == id && c.UserId == user.Id);
-
-            if (cv == null)
+            var cv = await _context.CVs.Include(c => c.Template).FirstOrDefaultAsync(c => c.Id == id);
+            if (cv == null || cv.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
             {
                 return NotFound();
             }
 
-            var viewModel = new EditCVViewModel
+            var model = new EditCVViewModel
             {
                 Id = cv.Id,
+                TemplateId = cv.TemplateId,
+                TemplateName = cv.Template.Name,
                 Title = cv.Title,
                 Content = cv.Content,
-                TemplateId = cv.TemplateId,
-                TemplateName = cv.Template.Name
+                PhotoUrl = cv.PhotoUrl
             };
 
-            return View(viewModel);
+            return View(model);
         }
-
         [HttpPost]
         public async Task<IActionResult> Edit(EditCVViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var user = await _userManager.GetUserAsync(User);
-                var cv = await _context.CVs
-                    .FirstOrDefaultAsync(c => c.Id == model.Id && c.UserId == user.Id);
-
-                if (cv == null)
-                {
-                    return NotFound();
-                }
-
-                cv.Title = model.Title;
-                cv.Content = model.Content;
-                cv.UpdatedDate = DateTime.Now;
-
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return View(model);
             }
 
-            return View(model);
+            var cv = await _context.CVs.FindAsync(model.Id);
+            if (cv == null || cv.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
+            {
+                return NotFound();
+            }
+
+            string photoUrl = cv.PhotoUrl;
+            if (model.Photo != null && model.Photo.Length > 0)
+            {
+                var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images"); // Thay đổi thành images
+                try
+                {
+                    if (!Directory.Exists(imagesFolder))
+                    {
+                        Directory.CreateDirectory(imagesFolder);
+                    }
+
+                    var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(model.Photo.FileName);
+                    var filePath = Path.Combine(imagesFolder, uniqueFileName);
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await model.Photo.CopyToAsync(fileStream);
+                    }
+                    photoUrl = "/images/" + uniqueFileName; // Cập nhật đường dẫn
+
+                    // Xóa ảnh cũ nếu có
+                    if (!string.IsNullOrEmpty(cv.PhotoUrl))
+                    {
+                        var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cv.PhotoUrl.TrimStart('/'));
+                        if (System.IO.File.Exists(oldFilePath))
+                        {
+                            System.IO.File.Delete(oldFilePath);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = "Lỗi khi lưu ảnh: " + ex.Message;
+                    return View(model);
+                }
+            }
+
+            cv.Title = model.Title;
+            cv.Content = model.Content;
+            cv.PhotoUrl = photoUrl;
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "CV đã được cập nhật thành công!";
+            return RedirectToAction("Index");
         }
 
         public async Task<IActionResult> Delete(int id)
@@ -179,7 +241,7 @@ namespace CVOnline.Web.Controllers
             }
 
             var cv = await _context.CVs
-                .Include(c => c.Template) // Include Template để hiển thị thông tin trong view
+                .Include(c => c.Template)
                 .FirstOrDefaultAsync(c => c.Id == id && c.UserId == user.Id);
 
             if (cv == null)
@@ -190,29 +252,56 @@ namespace CVOnline.Web.Controllers
             return View(cv);
         }
 
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        [HttpPost]
+        public async Task<IActionResult> DeleteConfirm(int id)
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return Unauthorized(new { message = "Bạn cần đăng nhập để xóa CV!" });
-            }
-
             var cv = await _context.CVs
-                .FirstOrDefaultAsync(c => c.Id == id && c.UserId == user.Id);
+                .Include(c => c.Template) // Bao gồm Template để hiển thị thông tin trong view nếu cần
+                .FirstOrDefaultAsync(c => c.Id == id);
 
-            if (cv == null)
+            if (cv == null || cv.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "Không tìm thấy CV hoặc bạn không có quyền xóa!";
+                return RedirectToAction("Index");
             }
 
-            _context.CVs.Remove(cv);
-            await _context.SaveChangesAsync();
+            try
+            {
+                // Xóa các bản ghi CVShares liên quan trước
+                var cvShares = await _context.CVShares
+                    .Where(cs => cs.CVId == id)
+                    .ToListAsync();
+                if (cvShares.Any())
+                {
+                    _context.CVShares.RemoveRange(cvShares);
+                }
 
-            TempData["SuccessMessage"] = "CV đã được xóa thành công!";
-            return RedirectToAction(nameof(Index));
+                // Xóa ảnh nếu có
+                if (!string.IsNullOrEmpty(cv.PhotoUrl))
+                {
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cv.PhotoUrl.TrimStart('/'));
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                }
+
+                // Xóa CV
+                _context.CVs.Remove(cv);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "CV đã được xóa thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Lỗi khi xóa CV: " + ex.Message;
+                if (ex.InnerException != null)
+                {
+                    TempData["InnerError"] = "Chi tiết lỗi: " + ex.InnerException.Message;
+                }
+            }
+
+            return RedirectToAction("Index");
         }
 
         public async Task<IActionResult> Preview(int id)

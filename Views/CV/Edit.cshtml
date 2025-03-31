@@ -11,7 +11,7 @@
             <h5>Mẫu: @Model.TemplateName</h5>
         </div>
         <div class="card-body">
-            <form asp-action="Edit" method="post">
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="TemplateId" />
                 <input type="hidden" asp-for="TemplateName" />
@@ -22,9 +22,22 @@
                     <span asp-validation-for="Title" class="text-danger"></span>
                 </div>
                 
+                <!-- Thêm phần tải ảnh -->
+                <div class="form-group mb-3">
+                    <label class="control-label">Ảnh cá nhân</label>
+                    @if (!string.IsNullOrEmpty(Model.PhotoUrl))
+                    {
+                        <div>
+                            <img src="@Model.PhotoUrl" alt="Ảnh hiện tại" style="max-width: 150px; margin-bottom: 10px;" />
+                        </div>
+                    }
+                    <input type="file" name="Photo" class="form-control" accept="image/*" />
+                </div>
+
                 <div class="form-group mb-3">
                     <label asp-for="Content" class="control-label">Nội dung CV</label>
-                    <textarea asp-for="Content" class="form-control" rows="15" id="cv-content"></textarea>
+                    <div id="cv-content" contenteditable="true" class="cv-editor">@Html.Raw(Model.Content)</div>
+                    <input type="hidden" asp-for="Content" id="hiddenContent" />
                     <span asp-validation-for="Content" class="text-danger"></span>
                 </div>
                 
@@ -37,14 +50,31 @@
     </div>
 </div>
 
+<style>
+    .cv-editor {
+        border: 1px solid #ced4da;
+        padding: 15px;
+        min-height: 400px;
+        overflow-y: auto;
+        background: #fff;
+    }
+    .cv-editor:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+</style>
+
 @section Scripts {
-    <script src="https://cdn.ckeditor.com/ckeditor5/36.0.1/classic/ckeditor.js"></script>
     <script>
-        // Thêm trình soạn thảo văn bản phong phú
-        ClassicEditor
-            .create(document.querySelector('#cv-content'))
-            .catch(error => {
-                console.error(error);
+        $(document).ready(function() {
+            $('#cv-content').on('input', function() {
+                $('#hiddenContent').val($(this).html());
             });
+
+            $('form').on('submit', function() {
+                $('#hiddenContent').val($('#cv-content').html());
+            });
+        });
     </script>
 }

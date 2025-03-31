@@ -1,4 +1,3 @@
-
 using CVOnline.Web.Models.Domain;
 using CVOnline.Web.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
@@ -33,7 +32,8 @@ namespace CVOnline.Web.Controllers
                     UserName = model.Email,
                     Email = model.Email,
                     FullName = model.FullName,
-                    Address = null
+                    Address = null,
+                    AvatarUrl = "/images/Avatar/avatar1.png"
                 };
 
                 var result = await _userManager.CreateAsync(user, model.Password);
@@ -82,6 +82,92 @@ namespace CVOnline.Web.Controllers
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Manage()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var model = new ManageViewModel
+            {
+                FullName = user.FullName,
+                Email = user.Email,
+                Address = user.Address,
+                AvatarUrl = user.AvatarUrl
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Manage(ManageViewModel model, IFormFile? AvatarUrl)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                {
+                    return NotFound();
+                }
+
+                user.FullName = model.FullName;
+                user.Address = model.Address;
+
+                if (AvatarUrl != null && AvatarUrl.Length > 0)
+                {
+                    // Xóa ảnh cũ nếu không phải ảnh mặc định
+                    if (!string.IsNullOrEmpty(user.AvatarUrl) && user.AvatarUrl != "/images/Avatar/avatar1.png")
+                    {
+                        var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", user.AvatarUrl.TrimStart('/'));
+                        if (System.IO.File.Exists(oldFilePath))
+                        {
+                            try
+                            {
+                                System.IO.File.Delete(oldFilePath);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Không thể xóa file ảnh cũ: {ex.Message}");
+                            }
+                        }
+                    }
+
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "Avatar");
+                    if (!Directory.Exists(uploadsFolder))
+                    {
+                        Directory.CreateDirectory(uploadsFolder);
+                    }
+
+                    var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(AvatarUrl.FileName);
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await AvatarUrl.CopyToAsync(fileStream);
+                    }
+
+                    user.AvatarUrl = $"/images/Avatar/{uniqueFileName}";
+                }
+                
+                var result = await _userManager.UpdateAsync(user);
+                if (result.Succeeded)
+                {
+                    TempData["SuccessMessage"] = "Cập nhật thông tin thành công";
+                    return RedirectToAction("Manage");
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+            }
+
+            return View(model);
         }
     }
 }
