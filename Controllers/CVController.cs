@@ -62,8 +62,8 @@ namespace CVOnline.Web.Controllers
                 TemplateId = templateId,
                 TemplateName = template.Name,
                 PreviewImageUrl = template.PreviewImageUrl,
-                HtmlTemplate = template.HtmlTemplate ?? "", // Đảm bảo không null
-                CssTemplate = template.CssTemplate ?? "",   // Đảm bảo không null
+                HtmlTemplate = template.HtmlTemplate ?? "",
+                CssTemplate = template.CssTemplate ?? "",  
                 FullName = user.FullName ?? "Nguyễn Văn A",
                 JobTitle = "Nhân viên tư vấn",
                 BirthDate = "15/05/1990",
@@ -204,7 +204,7 @@ namespace CVOnline.Web.Controllers
                     {
                         await model.Photo.CopyToAsync(fileStream);
                     }
-                    photoUrl = "/images/" + uniqueFileName; // Cập nhật đường dẫn
+                    photoUrl = "/images/" + uniqueFileName;
 
                     // Xóa ảnh cũ nếu có
                     if (!string.IsNullOrEmpty(cv.PhotoUrl))
