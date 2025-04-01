@@ -3,37 +3,45 @@
     ViewData["Title"] = "Danh sách mẫu CV";
 }
 
-<div class="container">
-    <h1 class="mb-4">@ViewData["Title"]</h1>
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold mb-3">Chọn mẫu CV của bạn</h1>
+        <p class="lead text-muted">Hơn 50+ mẫu CV chuyên nghiệp được thiết kế sẵn cho mọi ngành nghề</p>
+    </div>
     
-    <div class="row mb-4">
-        <div class="col">
-            <div class="btn-group">
+    <div class="row mb-4 justify-content-center">
+        <div class="col-auto">
+            <div class="btn-group btn-group-sm shadow-sm">
                 <button type="button" class="btn btn-outline-primary active" data-filter="all">Tất cả</button>
-                <button type="button" class="btn btn-outline-primary" data-filter="Simple">Simple</button>
-                <button type="button" class="btn btn-outline-primary" data-filter="Colorful">Colorful</button>
-                <button type="button" class="btn btn-outline-primary" data-filter="Office Worker">Office Worker</button>
-                <button type="button" class="btn btn-outline-primary" data-filter="Timeline">Timeline</button>
-                <button type="button" class="btn btn-outline-primary" data-filter="Experiencer">Experiencer</button>
-                <button type="button" class="btn btn-outline-primary" data-filter="No Photo">No Photo</button>
-                <button type="button" class="btn btn-outline-primary" data-filter="Fresher">Fresher</button>
+                @foreach (var category in Model.Select(t => t.Category).Distinct().Take(6))
+                {
+                    <button type="button" class="btn btn-outline-primary" data-filter="@category">@category</button>
+                }
             </div>
         </div>
     </div>
     
-    <div class="row template-container">
+    <div class="row g-4 template-container">
         @foreach (var template in Model)
         {
-            <div class="col-md-4 mb-4 template-item" data-category="@template.Category">
-                <div class="card">
-                    <img src="@template.PreviewImageUrl" class="card-img-top" alt="@template.Name">
-                    <div class="card-body">
-                        <h5 class="card-title">@template.Name</h5>
-                        <p class="card-text">
-                            <span class="badge bg-secondary">@template.Category</span>
-                            <span class="badge bg-info">@template.UsageCount lượt sử dụng</span>
-                        </p>
-                        <a asp-action="Create" asp-route-templateId="@template.Id" class="btn btn-primary w-100">Sử dụng mẫu này</a>
+            <div class="col-lg-4 col-md-6 template-item" data-category="@template.Category">
+                <div class="card h-100">
+                    <div class="position-relative">
+                        <img src="@template.PreviewImageUrl" class="card-img-top" alt="@template.Name" style="height: 200px; object-fit: cover;">
+                        <span class="position-absolute top-0 end-0 m-2 badge bg-success">
+                            <i class="bi bi-people-fill me-1"></i>@template.UsageCount
+                        </span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="card-title mb-0">@template.Name</h5>
+                            <span class="badge bg-primary">@template.Category</span>
+                        </div>
+                        <div class="mt-auto">
+                            <a asp-action="Create" asp-route-templateId="@template.Id" class="btn btn-primary w-100">
+                                <i class="bi bi-magic me-1"></i>Sử dụng mẫu này
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

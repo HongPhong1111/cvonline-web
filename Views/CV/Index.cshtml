@@ -3,57 +3,80 @@
     ViewData["Title"] = "Danh sách CV của tôi";
 }
 
-<div class="container">
-    <h1 class="mb-4">Danh sách CV của tôi</h1>
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-0">Danh sách CV của tôi</h1>
+            <p class="text-muted mb-0">@ViewBag.sl CV đã được tạo</p>
+        </div>
+        <a asp-action="Templates" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Tạo CV mới
+        </a>
+    </div>
 
-    <p>@ViewBag.sl CV đã được tạo</p>
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Ảnh</th>
-                <th>Tiêu đề</th>
-                <th>Mẫu</th>
-                <th>Ngày tạo</th>
-                <th>Hành động</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var cv in Model)
-            {
-                <tr>
-                    <td>
-                        @if (!string.IsNullOrEmpty(cv.PhotoUrl))
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 60px;">Ảnh</th>
+                            <th>Tiêu đề</th>
+                            <th>Mẫu</th>
+                            <th>Ngày tạo</th>
+                            <th style="width: 180px;">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cv in Model)
                         {
-                            <img src="@cv.PhotoUrl" alt="Ảnh CV" style="max-width: 50px; border-radius: 50%;" />
+                            <tr>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(cv.PhotoUrl))
+                                    {
+                                        <img src="@cv.PhotoUrl" alt="Ảnh CV" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-person text-muted"></i>
+                                        </div>
+                                    }
+                                </td>
+                                <td class="fw-semibold">@cv.Title</td>
+                                <td>@(cv.Template?.Name ?? "Không có mẫu")</td>
+                                <td>@cv.CreatedDate.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/CV/Preview/@cv.Id" class="btn btn-outline-primary" title="Xem trước">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="/CV/Edit/@cv.Id" class="btn btn-outline-secondary" title="Sửa">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="Share/Index/@cv.Id" class="btn btn-outline-success" title="Chia sẻ">
+                                            <i class="bi bi-share"></i>
+                                        </a>
+                                        <a href="/CV/Delete/@cv.Id" class="btn btn-outline-danger" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
                         }
-                        else
-                        {
-                            <span>Chưa có ảnh</span>
-                        }
-                    </td>
-                    <td>@cv.Title</td>
-                    <td>@(cv.Template?.Name ?? "Không có mẫu")</td>
-                    <td>@cv.CreatedDate.ToString("dd/MM/yyyy")</td>
-                    <td>
-                        <a href="/CV/Edit/@cv.Id" class="btn btn-primary btn-sm">Sửa</a>
-                        <a href="/CV/Delete/@cv.Id" class="btn btn-danger btn-sm">Xóa</a>
-                        <a href="/CV/Preview/@cv.Id" class="btn btn-info btn-sm">Xem trước</a>
-                        <a href="/CV/Share/@cv.Id" class="btn btn-success btn-sm">Chia sẻ</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-
-    <a asp-action="Templates" class="btn btn-primary mt-3">Tạo CV mới</a>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {

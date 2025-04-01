@@ -3,23 +3,35 @@
     ViewData["Title"] = "Tạo CV mới";
 }
 
-<div class="container">
-    <h1 class="mb-4">Tạo CV mới với mẫu @Model.TemplateName</h1>
+<div class="container py-5">
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Templates" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h1 class="h3 mb-0">Tạo CV mới với mẫu <span class="text-primary">@Model.TemplateName</span></h1>
+    </div>
 
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <img src="@Model.PreviewImageUrl" class="card-img-top" alt="@Model.TemplateName">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
-                    <h5 class="card-title">@Model.TemplateName</h5>
+                    <div class="text-center mb-4">
+                        <img src="@Model.PreviewImageUrl" class="img-fluid rounded" alt="@Model.TemplateName">
+                    </div>
+                    <h5 class="card-title text-center">@Model.TemplateName</h5>
+                    <div class="d-grid mt-4">
+                        <button type="button" id="previewBtn" class="btn btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i>Xem trước
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Nhập thông tin CV của bạn</h5>
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Nhập thông tin CV của bạn</h5>
                 </div>
                 <div class="card-body">
                     <form id="createCVForm" enctype="multipart/form-data">
@@ -38,23 +50,37 @@
                         <input type="hidden" name="Website" value="@Model.Website" />
                         <input type="hidden" name="PhotoUrl" value="@Model.PhotoUrl" />
 
-                        <div class="form-group mb-3">
-                            <label for="Title" class="control-label">Tiêu đề CV</label>
-                            <input type="text" name="Title" class="form-control"
-                                placeholder="Ví dụ: CV Xin việc IT - Nguyễn Văn A" required />
-                            <span class="text-danger" id="TitleError"></span>
+                        <div class="mb-4">
+                            <label for="Title" class="form-label fw-semibold">Tiêu đề CV</label>
+                            <input type="text" name="Title" class="form-control form-control-lg" 
+                                   placeholder="Ví dụ: CV Xin việc IT - Nguyễn Văn A" required />
+                            <div class="text-danger small mt-1" id="TitleError"></div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label for="Photo" class="control-label">Tải ảnh cá nhân</label>
-                            <input type="file" name="Photo" id="photoInput" class="form-control" accept="image/*" />
-                            <img id="photoPreview" src="" alt="Ảnh cá nhân" style="display: none; max-width: 150px; margin-top: 10px;" />
+                        <div class="mb-4">
+                            <label for="Photo" class="form-label fw-semibold">Ảnh cá nhân</label>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <div id="photoPreviewContainer" class="border rounded" style="width: 100px; height: 100px; overflow: hidden; display: none;">
+                                        <img id="photoPreview" src="" alt="Ảnh cá nhân" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </div>
+                                    <div id="noPhotoPlaceholder" class="bg-light d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                                        <i class="bi bi-person text-muted" style="font-size: 2rem;"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <input type="file" name="Photo" id="photoInput" class="form-control" accept="image/*" />
+                                    <div class="form-text">Chọn ảnh với tỷ lệ 1:1 để hiển thị tốt nhất</div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label class="control-label">Nội dung CV</label>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Nội dung CV</label>
                             <div id="cv-content" contenteditable="true" class="cv-editor">
-                                <div class="photo-container"><img id="cvPhoto" src="" alt="Ảnh cá nhân" style="max-width: 150px; display: none;" /></div>
+                                <div class="photo-container text-center mb-4">
+                                    <img id="cvPhoto" src="" alt="Ảnh cá nhân" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover; display: none;">
+                                </div>
                                 @Html.Raw(Model.HtmlTemplate
                                     .Replace("{FullName}", Model.FullName)
                                     .Replace("{JobTitle}", Model.JobTitle)
@@ -65,31 +91,39 @@
                                     .Replace("{Address}", Model.Address)
                                     .Replace("{Website}", Model.Website))
                             </div>
-                            <span class="text-danger" id="ContentError"></span>
+                            <div class="text-danger small mt-1" id="ContentError"></div>
                         </div>
 
-                        <div class="form-group d-flex justify-content-between">
-                            <a asp-action="Templates" class="btn btn-secondary">Quay lại</a>
-                            <button type="button" id="previewBtn" class="btn btn-info">Xem trước</button>
-                            <button type="submit" class="btn btn-success">Lưu CV</button>
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a asp-action="Templates" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Lưu CV
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="previewModalLabel">Xem trước CV</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="previewContent"></div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                </div>
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xem trước CV</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="previewContent" class="p-4"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x me-1"></i>Đóng
+                </button>
             </div>
         </div>
     </div>
@@ -98,27 +132,15 @@
 <style>
     @Html.Raw(Model.CssTemplate)
     .cv-editor {
-        border: 1px solid #ced4da;
-        padding: 20px;
-        min-height: 700px;
-        overflow-y: auto;
-        background: #fff;
-        line-height: 1.6;
-        font-size: 14px;
-    }
-    .cv-editor:focus {
-        outline: none;
-        border-color: #007bff;
-        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-    }
-    .photo-container {
-        margin-bottom: 20px;
-        text-align: center;
+        border: 1px solid #e0e0e0;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        min-height: 800px;
+        background: white;
     }
 </style>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(document).ready(function () {
             // Xử lý tải ảnh và hiển thị preview
@@ -127,7 +149,9 @@
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = function (event) {
-                        $('#photoPreview').attr('src', event.target.result).show();
+                        $('#photoPreviewContainer').show();
+                        $('#noPhotoPlaceholder').hide();
+                        $('#photoPreview').attr('src', event.target.result);
                         $('#cvPhoto').attr('src', event.target.result).show();
                     };
                     reader.readAsDataURL(file);
@@ -144,6 +168,8 @@
             // Xử lý submit form
             $('#createCVForm').on('submit', function (e) {
                 e.preventDefault();
+                $('#TitleError').text('');
+                $('#ContentError').text('');
 
                 const formData = new FormData(this);
                 const content = $('#cv-content').html();
@@ -153,7 +179,6 @@
                 }
                 formData.append('Content', content);
 
-                // Kiểm tra tiêu đề
                 const title = $('input[name="Title"]').val();
                 if (!title || title.trim() === '') {
                     $('#TitleError').text('Tiêu đề CV là bắt buộc');
@@ -166,16 +191,24 @@
                     data: formData,
                     processData: false,
                     contentType: false,
+                    beforeSend: function() {
+                        $('button[type="submit"]').prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang lưu...');
+                    },
                     success: function (response) {
                         if (response.success) {
-                            alert(response.message);
-                            window.location.href = '/CV/Index';
+                            toastr.success(response.message);
+                            setTimeout(function() {
+                                window.location.href = '/CV/Index';
+                            }, 1500);
                         } else {
-                            alert("Lỗi: " + response.message);
+                            toastr.error(response.message);
                         }
                     },
                     error: function (xhr) {
-                        alert("Đã có lỗi xảy ra khi lưu CV: " + (xhr.responseText || "Lỗi không xác định"));
+                        toastr.error("Đã có lỗi xảy ra khi lưu CV: " + (xhr.responseText || "Lỗi không xác định"));
+                    },
+                    complete: function() {
+                        $('button[type="submit"]').prop('disabled', false).html('<i class="bi bi-save me-1"></i>Lưu CV');
                     }
                 });
             });
