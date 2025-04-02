@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 
 namespace CVOnline.Web.Controllers
 {
@@ -22,8 +21,6 @@ namespace CVOnline.Web.Controllers
             _userManager = userManager;
         }
 
-
-        // [HttpGet]
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -40,10 +37,20 @@ namespace CVOnline.Web.Controllers
             return View(cvs);
         }
 
-        public async Task<IActionResult> Templates()
+        public async Task<IActionResult> Templates(string searchString)
         {
-            var templates = await _context.CVTemplates.ToListAsync();
-            return View(templates);
+            var templates = _context.CVTemplates.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                searchString = searchString.ToLower();
+                templates = templates.Where(t => t.Name.ToLower().Contains(searchString) || 
+                                                t.Category.ToLower().Contains(searchString));
+            }
+
+            var result = await templates.ToListAsync();
+            ViewBag.SearchString = searchString;
+            return View(result);
         }
 
         [HttpGet]
@@ -76,10 +83,10 @@ namespace CVOnline.Web.Controllers
 
             return View(viewModel);
         }
+
         [HttpPost]
         public async Task<IActionResult> Create(CreateCVViewModel model)
         {
-            // Bỏ qua validation cho các trường không bắt buộc
             ModelState.Remove("Photo");
             ModelState.Remove("PhotoUrl");
             ModelState.Remove("HtmlTemplate");
@@ -173,6 +180,7 @@ namespace CVOnline.Web.Controllers
 
             return View(model);
         }
+
         [HttpPost]
         public async Task<IActionResult> Edit(EditCVViewModel model)
         {
@@ -190,7 +198,7 @@ namespace CVOnline.Web.Controllers
             string photoUrl = cv.PhotoUrl;
             if (model.Photo != null && model.Photo.Length > 0)
             {
-                var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images"); // Thay đổi thành images
+                var imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
                 try
                 {
                     if (!Directory.Exists(imagesFolder))
@@ -206,7 +214,6 @@ namespace CVOnline.Web.Controllers
                     }
                     photoUrl = "/images/" + uniqueFileName;
 
-                    // Xóa ảnh cũ nếu có
                     if (!string.IsNullOrEmpty(cv.PhotoUrl))
                     {
                         var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cv.PhotoUrl.TrimStart('/'));
@@ -256,7 +263,7 @@ namespace CVOnline.Web.Controllers
         public async Task<IActionResult> DeleteConfirm(int id)
         {
             var cv = await _context.CVs
-                .Include(c => c.Template) // Bao gồm Template để hiển thị thông tin trong view nếu cần
+                .Include(c => c.Template)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (cv == null || cv.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
@@ -267,7 +274,6 @@ namespace CVOnline.Web.Controllers
 
             try
             {
-                // Xóa các bản ghi CVShares liên quan trước
                 var cvShares = await _context.CVShares
                     .Where(cs => cs.CVId == id)
                     .ToListAsync();
@@ -276,7 +282,6 @@ namespace CVOnline.Web.Controllers
                     _context.CVShares.RemoveRange(cvShares);
                 }
 
-                // Xóa ảnh nếu có
                 if (!string.IsNullOrEmpty(cv.PhotoUrl))
                 {
                     var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", cv.PhotoUrl.TrimStart('/'));
@@ -286,7 +291,6 @@ namespace CVOnline.Web.Controllers
                     }
                 }
 
-                // Xóa CV
                 _context.CVs.Remove(cv);
                 await _context.SaveChangesAsync();
 

@@ -1,0 +1,28 @@
+@model CVOnline.Web.Models.Domain.ApplicationUser
+@{
+    ViewData["Title"] = "Xóa người dùng";
+}
+
+<div class="container py-5">
+    <h1 class="h3 fw-bold mb-4">Xóa người dùng</h1>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5>Bạn có chắc chắn muốn xóa người dùng này?</h5>
+            <dl class="row">
+                <dt class="col-sm-3">Họ tên</dt>
+                <dd class="col-sm-9">@Model.FullName</dd>
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">@Model.Email</dd>
+            </dl>
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="Id" />
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-1"></i>Xóa
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x me-1"></i>Hủy
+                </a>
+            </form>
+        </div>
+    </div>
+</div>

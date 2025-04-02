@@ -1,10 +1,11 @@
 using CVOnline.Web.Models.Domain;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace CVOnline.Web.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole, string>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -19,7 +20,7 @@ namespace CVOnline.Web.Data
         {
             base.OnModelCreating(builder);
 
-            // Cấu hình quan hệ giữa các entity (giữ nguyên)
+            // Cấu hình quan hệ giữa các entity
             builder.Entity<CV>()
                 .HasOne(c => c.User)
                 .WithMany(u => u.CVs)
@@ -41,6 +42,12 @@ namespace CVOnline.Web.Data
                 .WithMany()
                 .HasForeignKey(cs => cs.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Seed vai trò
+            builder.Entity<IdentityRole>().HasData(
+                new IdentityRole { Id = "1", Name = "Admin", NormalizedName = "ADMIN" },
+                new IdentityRole { Id = "2", Name = "User", NormalizedName = "USER" }
+            );
 
             // Seed dữ liệu mẫu CVTemplate với nội dung chi tiết và giao diện đẹp hơn
             builder.Entity<CVTemplate>().HasData(
@@ -278,7 +285,7 @@ namespace CVOnline.Web.Data
                     CssTemplate = ".technical-cv { font-family: 'Courier New', monospace; display: flex; color: #008080; background: #f5fafa; } " +
                         ".technical-cv aside { width: 25%; background: #e0ffff; padding: 20px; border-right: 3px solid #008080; } " +
                         ".technical-cv main { width: 75%; padding: 20px; } " +
-                        ".technical-cv h1 { font-size: 30px; color: #008080; } " +
+                        ".technical_cv h1 { font-size: 30px; color: #008080; } " +
                         ".technical-cv .contact { font-size: 14px; line-height: 1.8; } " +
                         ".technical-cv h2 { font-size: 22px; color: #006d5b; margin: 20px 0 10px; background: #e0ffff; padding: 5px; } " +
                         ".technical-cv h3 { font-size: 18px; } " +

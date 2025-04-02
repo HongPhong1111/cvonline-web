@@ -1,5 +1,6 @@
 using CVOnline.Web.Models.Domain;
 using CVOnline.Web.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization; // Thêm để kiểm tra quyền
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,6 +41,7 @@ namespace CVOnline.Web.Controllers
 
                 if (result.Succeeded)
                 {
+                    await _userManager.AddToRoleAsync(user, "User"); // Gán vai trò User
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return RedirectToAction("Index", "Home");
                 }
@@ -85,6 +87,7 @@ namespace CVOnline.Web.Controllers
         }
 
         [HttpGet]
+        [Authorize] // Yêu cầu đăng nhập để xem thông tin tài khoản
         public async Task<IActionResult> Manage()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -105,66 +108,77 @@ namespace CVOnline.Web.Controllers
         }
 
         [HttpPost]
+        [Authorize] // Yêu cầu đăng nhập để chỉnh sửa thông tin
         public async Task<IActionResult> Manage(ManageViewModel model, IFormFile? AvatarUrl)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var user = await _userManager.GetUserAsync(User);
-                if (user == null)
-                {
-                    return NotFound();
-                }
+                return View(model);
+            }
 
-                user.FullName = model.FullName;
-                user.Address = model.Address;
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound();
+            }
 
-                if (AvatarUrl != null && AvatarUrl.Length > 0)
+            // Kiểm tra quyền: Chỉ người sở hữu tài khoản mới được sửa
+            if (user.Email != model.Email)
+            {
+                return Forbid(); // Trả về lỗi 403 nếu không phải tài khoản của người dùng hiện tại
+            }
+
+            // Cập nhật thông tin tài khoản
+            user.FullName = model.FullName;
+            user.Address = model.Address;
+
+            if (AvatarUrl != null && AvatarUrl.Length > 0)
+            {
+                // Xóa ảnh cũ nếu không phải ảnh mặc định
+                if (!string.IsNullOrEmpty(user.AvatarUrl) && user.AvatarUrl != "/images/Avatar/avatar1.png")
                 {
-                    // Xóa ảnh cũ nếu không phải ảnh mặc định
-                    if (!string.IsNullOrEmpty(user.AvatarUrl) && user.AvatarUrl != "/images/Avatar/avatar1.png")
+                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", user.AvatarUrl.TrimStart('/'));
+                    if (System.IO.File.Exists(oldFilePath))
                     {
-                        var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", user.AvatarUrl.TrimStart('/'));
-                        if (System.IO.File.Exists(oldFilePath))
+                        try
                         {
-                            try
-                            {
-                                System.IO.File.Delete(oldFilePath);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Không thể xóa file ảnh cũ: {ex.Message}");
-                            }
+                            System.IO.File.Delete(oldFilePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Không thể xóa file ảnh cũ: {ex.Message}");
                         }
                     }
-
-                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "Avatar");
-                    if (!Directory.Exists(uploadsFolder))
-                    {
-                        Directory.CreateDirectory(uploadsFolder);
-                    }
-
-                    var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(AvatarUrl.FileName);
-                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await AvatarUrl.CopyToAsync(fileStream);
-                    }
-
-                    user.AvatarUrl = $"/images/Avatar/{uniqueFileName}";
                 }
-                
-                var result = await _userManager.UpdateAsync(user);
-                if (result.Succeeded)
+
+                // Lưu ảnh mới
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "Avatar");
+                if (!Directory.Exists(uploadsFolder))
                 {
-                    TempData["SuccessMessage"] = "Cập nhật thông tin thành công";
-                    return RedirectToAction("Manage");
+                    Directory.CreateDirectory(uploadsFolder);
                 }
 
-                foreach (var error in result.Errors)
+                var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(AvatarUrl.FileName);
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    await AvatarUrl.CopyToAsync(fileStream);
                 }
+
+                user.AvatarUrl = $"/images/Avatar/{uniqueFileName}";
+            }
+
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                TempData["SuccessMessage"] = "Cập nhật thông tin thành công";
+                return RedirectToAction("Manage");
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
             }
 
             return View(model);
